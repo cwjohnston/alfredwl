@@ -75,17 +75,22 @@ def show_list(list_name):
     valids = ['NO']*len(task_titles) #Not valid since complete_task doesn't work
     return to_xml(task_titles, args=task_args, valids=valids)
 
-def add_task(task_title):
-    # Get first list_id which should be the inbox.
-    # This is where the new task will be placed by default.
+
+def get_inbox_list_id():
+    # Find the inbox by list_type
     r = requests.get('https://a.wunderlist.com/api/v1/lists',
                      headers=api_headers)
-    first_list_id = r.json()[0]['id']
 
-    # Actually add the task
+    for list in r.json():
+        if list['list_type'] == 'inbox':
+            return list['id']
+
+def add_task(task_title):
+    # Adds task to the inbox
+    inbox_list_id = get_inbox_list_id()
     r = requests.post('https://a.wunderlist.com/api/v1/tasks',
                       headers=api_headers,
-                      data=json.dumps({'list_id': first_list_id,
+                      data=json.dumps({'list_id': inbox_list_id,
                                        'title': task_title}))
     if 200 <= r.status_code < 300:
         return task_title
